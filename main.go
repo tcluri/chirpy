@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -31,6 +32,7 @@ func main() {
 	// API router endpoints
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
+	apiRouter.Post("/validate_chirp", handlerChirpsValidate)
 	router.Mount("/api", apiRouter)
 	// Admin router endpoints
 	adminRouter := chi.NewRouter()
@@ -45,4 +47,56 @@ func main() {
 	}
 	log.Printf("Serving files from %s on port %s\n", filepathRoot, port)
 	log.Fatal(srv.ListenAndServe())
+}
+
+func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
+	// Chirp struct
+	type chirp struct {
+		Body string `json:"body"`
+	}
+	// Error response struct
+	type returnVals struct {
+		Valid bool `json:"valid"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	achirp := chirp{}
+	err := decoder.Decode(&achirp)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong")
+	}
+
+	const maxChirpLength = 140
+	if len(achirp.Body) > maxChirpLength {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, returnVals{
+		Valid: true,
+	})
+}
+
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	if code > 499 {
+		log.Printf("Responding with 5XX error: %s", msg)
+	}
+	type errorResponse struct {
+		Error string `json:"error"`
+	}
+	respondWithJSON(w, code, errorResponse{
+		Error: msg,
+	})
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	dat, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.WriteHeader(code)
+	w.Write(dat)
 }
