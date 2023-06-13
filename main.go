@@ -39,9 +39,11 @@ func main() {
 	router.Handle("/app/*", fsHandler)
 	// API router endpoints
 	apiRouter := chi.NewRouter() // api router
+	// apiRouter.Post("/users", apiCfg.handlerUsersCreate)
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)
+	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)
 	router.Mount("/api", apiRouter)
 	// Admin router endpoints
 	adminRouter := chi.NewRouter()

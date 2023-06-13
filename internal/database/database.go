@@ -18,8 +18,14 @@ type Chirp struct {
 	Body string `json:"body"`
 }
 
+// type User struct {
+// 	ID    int    `json:"id"`
+// 	Email string `json:"email"`
+// }
+
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	// Users  map[int]User  `json:"users"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -141,6 +147,37 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	return chirp, nil
 }
 
+// func (db *DB) CreateUser(email string) (User, error) {
+// 	db.mux.Lock()
+// 	defer db.mux.Unlock()
+
+// 	// Load the current database
+// 	dbStruct, err := db.loadDB()
+// 	if err != nil {
+// 		return User{}, err
+// 	}
+
+// 	// Generate a unique ID for the chirp
+// 	id := db.generateUniqueID("user")
+
+// 	// Create the chirp
+// 	user := User{
+// 		ID:    id,
+// 		Email: email,
+// 	}
+
+// 	// Add the chirp to the database
+// 	dbStruct.Users[id] = user
+
+// 	// Write the updated database back to disk
+// 	err = db.writeDB(dbStruct)
+// 	if err != nil {
+// 		return User{}, err
+// 	}
+
+// 	return user, nil
+// }
+
 // generateUniqueID generates a unique ID for the chirp
 func (db *DB) generateUniqueID() int {
 	dbStruct, _ := db.loadDB()
@@ -177,4 +214,20 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 	})
 
 	return chirps, nil
+}
+
+func (db *DB) GetChirp(chirpID int) (Chirp, error) {
+	db.mux.RLock()
+	defer db.mux.RUnlock()
+
+	// Load the current database
+	dbStruct, err := db.loadDB()
+	if err != nil {
+		return Chirp{}, err
+	}
+	chirp := dbStruct.Chirps[chirpID]
+	if chirp.ID == 0 && chirp.Body == "" {
+		return Chirp{}, errors.New("The chirp does not exist")
+	}
+	return chirp, nil
 }
