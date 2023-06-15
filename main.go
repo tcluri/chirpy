@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,9 +24,18 @@ func main() {
 
 	db, err := database.NewDB("database.json")
 	if err != nil {
-		fmt.Println("We are here")
 		log.Fatal(err)
 	}
+
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+	if dbg != nil && *dbg {
+		err := db.ResetDB()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	// Initialize the api config
 	apiCfg := apiConfig{
 		fileserverHits: 0,
@@ -39,8 +49,11 @@ func main() {
 	router.Handle("/app/*", fsHandler)
 	// API router endpoints
 	apiRouter := chi.NewRouter() // api router
-	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
 	apiRouter.Get("/healthz", handlerReadiness)
+
+	apiRouter.Post("/login", apiCfg.handlerLogin)
+	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)

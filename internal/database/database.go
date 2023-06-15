@@ -21,7 +21,10 @@ type Chirp struct {
 type User struct {
 	ID    int    `json:"id"`
 	Email string `json:"email"`
+	Hash  []byte `json:"hash"`
 }
+
+var ErrAlreadyExists = errors.New("User already exists")
 
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
@@ -117,6 +120,19 @@ func (db *DB) writeDB(dbStructure DBStructure) error {
 	return nil
 }
 
+func (db *DB) ResetDB() error {
+	path := db.path
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+	newDB, err := NewDB(path)
+	if err != nil {
+		return err
+	}
+	db = newDB
+	return nil
+}
+
 func (db *DB) CreateChirp(body string) (Chirp, error) {
 	db.mux.Lock()
 	defer db.mux.Unlock()
@@ -146,37 +162,6 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	}
 
 	return chirp, nil
-}
-
-func (db *DB) CreateUser(email string) (User, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
-
-	// Load the current database
-	dbStruct, err := db.loadDB()
-	if err != nil {
-		return User{}, err
-	}
-
-	// Generate a unique ID for the chirp
-	id := len(dbStruct.Users) + 1
-
-	// Create the chirp
-	user := User{
-		ID:    id,
-		Email: email,
-	}
-
-	// Add the chirp to the database
-	dbStruct.Users[id] = user
-
-	// Write the updated database back to disk
-	err = db.writeDB(dbStruct)
-	if err != nil {
-		return User{}, err
-	}
-
-	return user, nil
 }
 
 func (db *DB) GetChirps() ([]Chirp, error) {
@@ -219,4 +204,58 @@ func (db *DB) GetChirp(chirpID int) (Chirp, error) {
 		return Chirp{}, errors.New("The chirp does not exist")
 	}
 	return chirp, nil
+}
+
+func (db *DB) CreateUser(email string, hashedPassword []byte) (User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	// Load the current database
+	dbStruct, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	// Check if the user already exists
+	existingUser, err := db.GetUserByEmail(email)
+	if len(existingUser.Email) > 0 {
+		return User{}, ErrAlreadyExists
+	}
+
+	// Generate a unique ID for the user
+	id := len(dbStruct.Users) + 1
+
+	// Create the user
+	user := User{
+		ID:    id,
+		Email: email,
+		Hash:  hashedPassword,
+	}
+
+	// Add the user to the database
+	dbStruct.Users[id] = user
+
+	// Write the updated database back to disk
+	err = db.writeDB(dbStruct)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+}
+
+func (db *DB) GetUserByEmail(useremail string) (User, error) {
+	// Load the current database
+	dbStruct, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	// Find the user
+	for _, eachUser := range dbStruct.Users {
+		if eachUser.Email == useremail {
+			return eachUser, nil
+		}
+	}
+	return User{}, errors.New("Could not find user")
 }
