@@ -219,6 +219,7 @@ func (db *DB) CreateUser(email string, hashedPassword []byte) (User, error) {
 	// Check if the user already exists
 	existingUser, err := db.GetUserByEmail(email)
 	if len(existingUser.Email) > 0 {
+
 		return User{}, ErrAlreadyExists
 	}
 
@@ -258,4 +259,27 @@ func (db *DB) GetUserByEmail(useremail string) (User, error) {
 		}
 	}
 	return User{}, errors.New("Could not find user")
+}
+
+func (db *DB) UpdateUser(userIDInt int, email string, hashedPassword []byte) (User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	dbStruct, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	for _, eachUser := range dbStruct.Users {
+		if eachUser.ID == userIDInt {
+			// Update the user in db
+			dbStruct.Users[userIDInt] = User{
+				ID:    userIDInt,
+				Email: email,
+				Hash:  hashedPassword,
+			}
+			return dbStruct.Users[userIDInt], nil
+		}
+	}
+	return User{}, errors.New("User not available in the database")
 }

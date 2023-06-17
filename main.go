@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/tcluri/chirpy/internal/database"
 
 	"github.com/go-chi/chi/v5"
@@ -14,13 +16,23 @@ import (
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
 
 func main() {
-	fmt.Println("Hello! Welcome to the chirpy webserver!")
-
 	const filepathRoot = "."
 	const port = "8080"
+
+	// Load the environment variable
+	godotenv.Load(".env")
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
+	}
+
+	// Welcome message
+	fmt.Println("Hello! Welcome to the chirpy webserver!")
 
 	db, err := database.NewDB("database.json")
 	if err != nil {
@@ -40,6 +52,7 @@ func main() {
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		jwtSecret:      jwtSecret,
 	}
 	// mux := http.NewServeMux()
 
@@ -52,7 +65,9 @@ func main() {
 	apiRouter.Get("/healthz", handlerReadiness)
 
 	apiRouter.Post("/login", apiCfg.handlerLogin)
+
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
 
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)
