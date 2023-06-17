@@ -79,10 +79,11 @@ func main() {
 	router.Mount("/admin", adminRouter)
 
 	corsMux := middlewareCors(router)
+	logsMux := middlewareLog(corsMux)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: corsMux,
+		Handler: logsMux,
 	}
 	log.Printf("Serving files from %s on port %s\n", filepathRoot, port)
 	log.Fatal(srv.ListenAndServe())
