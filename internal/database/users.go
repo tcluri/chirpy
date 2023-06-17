@@ -51,6 +51,9 @@ func (db *DB) GetUserByEmail(useremail string) (User, error) {
 }
 
 func (db *DB) UpdateUser(userIDInt int, email string, hashedPassword []byte) (User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
 	dbStruct, err := db.loadDB()
 	if err != nil {
 		return User{}, err

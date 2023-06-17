@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,19 +18,16 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	}
 
 	token, err := auth.GetBearerToken(r.Header)
-	fmt.Printf("Token is %v", token)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
 		return
 	}
-	fmt.Println("Got bearer token!")
 	subject, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
 		return
 	}
 
-	fmt.Printf("Printing body of update function %v", r.Body)
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err = decoder.Decode(&params)

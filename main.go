@@ -57,33 +57,28 @@ func main() {
 	// mux := http.NewServeMux()
 
 	router := chi.NewRouter() // app router
-	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
-	router.Handle("/app", fsHandler)
-	router.Handle("/app/*", fsHandler)
+	// fsHandler := apiCfg.middlewareMetricsInc(middlewareLog(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
+
+	router.Mount("/", apiCfg.middlewareMetricsInc(middlewareLog(http.FileServer(http.Dir(".")))))
+
+	router.Get("/metrics", apiCfg.handlerMetrics)
+
 	// API router endpoints
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
-
-	apiRouter.Post("/login", apiCfg.handlerLogin)
-
-	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
-	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
-
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)
-	router.Mount("/api", apiRouter)
-	// Admin router endpoints
-	adminRouter := chi.NewRouter()
-	adminRouter.Get("/metrics", apiCfg.handlerMetrics)
-	router.Mount("/admin", adminRouter)
+	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
+	apiRouter.Post("/login", apiCfg.handlerLogin)
+	router.Mount("/api", middlewareLog(apiRouter))
 
 	corsMux := middlewareCors(router)
-	logsMux := middlewareLog(corsMux)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: logsMux,
+		Handler: corsMux,
 	}
 	log.Printf("Serving files from %s on port %s\n", filepathRoot, port)
 	log.Fatal(srv.ListenAndServe())
