@@ -3,9 +3,6 @@ package database
 import "errors"
 
 func (db *DB) CreateUser(email string, hashedPassword []byte) (User, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
-
 	// Load the current database
 	dbStruct, err := db.loadDB()
 	if err != nil {
@@ -13,7 +10,7 @@ func (db *DB) CreateUser(email string, hashedPassword []byte) (User, error) {
 	}
 	// Check if the user already exists
 	existingUser, err := db.GetUserByEmail(email)
-	if len(existingUser.Email) > 0 {
+	if err == nil && len(existingUser.Email) > 0 {
 		return User{}, ErrAlreadyExists
 	}
 	// Generate a unique ID for the user
@@ -51,9 +48,6 @@ func (db *DB) GetUserByEmail(useremail string) (User, error) {
 }
 
 func (db *DB) UpdateUser(userIDInt int, email string, hashedPassword []byte) (User, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
-
 	dbStruct, err := db.loadDB()
 	if err != nil {
 		return User{}, err
