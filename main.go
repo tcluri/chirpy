@@ -69,9 +69,9 @@ func main() {
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)
-	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
 	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
-	apiRouter.Post("/login", apiCfg.handlerLogin)
+	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Post("/login", apiCfg.handlerUsersLogin)
 	router.Mount("/api", middlewareLog(apiRouter))
 
 	corsMux := middlewareCors(router)
