@@ -106,6 +106,9 @@ func (db *DB) loadDB() (DBStructure, error) {
 }
 
 func (db *DB) writeDB(dbStructure DBStructure) error {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
 	data, err := json.MarshalIndent(dbStructure, "", "  ")
 	if err != nil {
 		return err

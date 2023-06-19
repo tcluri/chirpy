@@ -2,8 +2,8 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,7 +35,7 @@ func CreateJWT(userid int, jwtSecret string, expirytime time.Duration) (string, 
 		Issuer:    "chirpy",
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expirytime)),
-		Subject:   string(userid),
+		Subject:   strconv.Itoa(userid),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, registeredClaims)
 	signedToken, err := token.SignedString([]byte(jwtSecret))
@@ -47,9 +47,7 @@ func CreateJWT(userid int, jwtSecret string, expirytime time.Duration) (string, 
 
 func GetBearerToken(header http.Header) (string, error) {
 	authField := header.Get("Authorization")
-	fmt.Printf("The authorization token is %v", authField)
-	token := strings.TrimPrefix(authField, "Bearer: ")
-	fmt.Printf("The token extracted %v", token)
+	token := strings.TrimPrefix(authField, "Bearer ")
 	if token == "" {
 		return "", errors.New("Couldn't find Token in the request header")
 	}
@@ -64,7 +62,7 @@ func ValidateJWT(tokenString string, jwtSecret string) (string, error) {
 		return "", err
 	}
 	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
-		if claims.ExpiresAt.Before(time.Now().UTC()) {
+		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now().UTC()) {
 			return "", errors.New("Token expired")
 		}
 		userID := claims.Subject
