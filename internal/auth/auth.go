@@ -30,9 +30,9 @@ func CheckPasswordHash(password string, hashedPass []byte) error {
 	return nil
 }
 
-func CreateJWT(userid int, jwtSecret string, expirytime time.Duration) (string, error) {
+func CreateJWT(userid int, jwtSecret string, expirytime time.Duration, issuer string) (string, error) {
 	registeredClaims := jwt.RegisteredClaims{
-		Issuer:    "chirpy",
+		Issuer:    issuer,
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expirytime)),
 		Subject:   strconv.Itoa(userid),
@@ -62,6 +62,9 @@ func ValidateJWT(tokenString string, jwtSecret string) (string, error) {
 		return "", err
 	}
 	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+		if claims.Issuer == "chirpy-refresh" {
+			return "", errors.New("Token issuer is a refresh token")
+		}
 		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now().UTC()) {
 			return "", errors.New("Token expired")
 		}
@@ -70,4 +73,31 @@ func ValidateJWT(tokenString string, jwtSecret string) (string, error) {
 	} else {
 		return "", errors.New("Couldn't validate JWT token")
 	}
+}
+
+func RefreshToken(tokenString string, jwtSecret string) (string, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+		if claims.Issuer == "chirpy-refresh" {
+			userID, err := strconv.Atoi(claims.Subject)
+			if err != nil {
+				return "", err
+			}
+			expiryTime := time.Duration(time.Hour)
+			accessIssuer := "chirpy-access"
+			access_token, err := CreateJWT(userID, jwtSecret, expiryTime, accessIssuer)
+			if err != nil {
+				return "", err
+			}
+			return access_token, nil
+		} else {
+			return "", errors.New("Couldn't refresh access token: claims issuer is not refresh token")
+		}
+	}
+	return "", errors.New("Couldn't refresh access token: token invalid")
 }

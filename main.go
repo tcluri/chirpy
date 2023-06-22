@@ -71,6 +71,8 @@ func main() {
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)
 	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Post("/refresh", apiCfg.handlerRefresh)
+	apiRouter.Post("/revoke", apiCfg.handlerRevoke)
 	apiRouter.Post("/login", apiCfg.handlerUsersLogin)
 	router.Mount("/api", middlewareLog(apiRouter))
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"sync"
+	"time"
 )
 
 type DB struct {
@@ -23,11 +24,17 @@ type User struct {
 	Hash  []byte `json:"hash"`
 }
 
+type RevokedToken struct {
+	ID        string    `json:"id"`
+	RevokedAt time.Time `json:"revoked_at"`
+}
+
 var ErrAlreadyExists = errors.New("User already exists")
 
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
-	Users  map[int]User  `json:"users"`
+	Chirps        map[int]Chirp           `json:"chirps"`
+	Users         map[int]User            `json:"users"`
+	RevokedTokens map[string]RevokedToken `json:"tokens"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -64,8 +71,9 @@ func NewDB(path string) (*DB, error) {
 
 func createEmptyDatabaseFile(path string) ([]byte, error) {
 	emptyDB := DBStructure{
-		Chirps: make(map[int]Chirp),
-		Users:  make(map[int]User),
+		Chirps:        make(map[int]Chirp),
+		Users:         make(map[int]User),
+		RevokedTokens: make(map[string]RevokedToken),
 	}
 
 	data, err := json.MarshalIndent(emptyDB, "", "  ")
