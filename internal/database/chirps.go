@@ -5,9 +5,7 @@ import (
 	"sort"
 )
 
-func (db *DB) CreateChirp(body string) (Chirp, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
+func (db *DB) CreateChirp(body string, userID int) (Chirp, error) {
 	// Load the current database
 	dbStruct, err := db.loadDB()
 	if err != nil {
@@ -17,8 +15,9 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	id := len(dbStruct.Chirps) + 1
 	// Create the chirp
 	chirp := Chirp{
-		ID:   id,
-		Body: body,
+		ID:       id,
+		AuthorID: userID,
+		Body:     body,
 	}
 	// Add the chirp to the database
 	dbStruct.Chirps[id] = chirp
