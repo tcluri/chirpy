@@ -19,9 +19,11 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	isRevoked, err := cfg.DB.IsTokenRevoked(refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't check session")
+		return
 	}
 	if isRevoked {
 		respondWithError(w, http.StatusUnauthorized, "Refresh token is revoked")
+		return
 	}
 	new_access_token, err := auth.RefreshToken(refreshToken, cfg.jwtSecret)
 	if err != nil {
