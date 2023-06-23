@@ -54,6 +54,15 @@ func GetBearerToken(header http.Header) (string, error) {
 	return token, nil
 }
 
+func GetPolkaApiKey(header http.Header) (string, error) {
+	authField := header.Get("Authorization")
+	apiKey := strings.TrimPrefix(authField, "ApiKey ")
+	if apiKey == "" {
+		return "", errors.New("Couldn't find API key in the request header")
+	}
+	return apiKey, nil
+}
+
 func ValidateJWT(tokenString string, jwtSecret string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecret), nil

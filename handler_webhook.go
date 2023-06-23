@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/tcluri/chirpy/internal/auth"
 )
 
 func (cfg *apiConfig) handlerUserUpgrade(w http.ResponseWriter, r *http.Request) {
@@ -13,9 +15,19 @@ func (cfg *apiConfig) handlerUserUpgrade(w http.ResponseWriter, r *http.Request)
 		} `json:"data"`
 	}
 
+	apiKey, err := auth.GetPolkaApiKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
+	if apiKey != cfg.polkaSecret {
+		respondWithError(w, http.StatusUnauthorized, "API key mismatch")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
 		return
