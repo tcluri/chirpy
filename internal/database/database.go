@@ -20,9 +20,10 @@ type Chirp struct {
 }
 
 type User struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
-	Hash  []byte `json:"hash"`
+	ID          int    `json:"id"`
+	Email       string `json:"email"`
+	Hash        []byte `json:"hash"`
+	IsChirpyRed bool   `json:"is_chirpy_red"`
 }
 
 type RevokedToken struct {

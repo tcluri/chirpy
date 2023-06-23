@@ -15,11 +15,14 @@ func (db *DB) CreateUser(email string, hashedPassword []byte) (User, error) {
 	}
 	// Generate a unique ID for the user
 	id := len(dbStruct.Users) + 1
+	// IsChirpyRed subscribed
+	subscribed := false
 	// Create the user
 	user := User{
-		ID:    id,
-		Email: email,
-		Hash:  hashedPassword,
+		ID:          id,
+		Email:       email,
+		Hash:        hashedPassword,
+		IsChirpyRed: subscribed,
 	}
 	// Add the user to the database
 	dbStruct.Users[id] = user
@@ -65,5 +68,23 @@ func (db *DB) UpdateUser(userIDInt int, email string, hashedPassword []byte) (Us
 		return User{}, err
 	}
 
+	return user, nil
+}
+
+func (db *DB) UpgradeUserStatus(userIDInt int) (User, error) {
+	dbStruct, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+	user, ok := dbStruct.Users[userIDInt]
+	if !ok {
+		return User{}, errors.New("User does not exist")
+	}
+	user.IsChirpyRed = true
+	dbStruct.Users[userIDInt] = user
+	err = db.writeDB(dbStruct)
+	if err != nil {
+		return User{}, err
+	}
 	return user, nil
 }

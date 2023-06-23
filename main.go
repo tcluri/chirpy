@@ -66,12 +66,17 @@ func main() {
 	// API router endpoints
 	apiRouter := chi.NewRouter() // api router
 	apiRouter.Get("/healthz", handlerReadiness)
+
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)
 	apiRouter.Delete("/chirps/{chirpID}", apiCfg.handlerChirpsDelete)
+
 	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+
+	apiRouter.Post("/polka/webhooks", apiCfg.handlerUserUpgrade)
+
 	apiRouter.Post("/refresh", apiCfg.handlerRefresh)
 	apiRouter.Post("/revoke", apiCfg.handlerRevoke)
 	apiRouter.Post("/login", apiCfg.handlerUsersLogin)
