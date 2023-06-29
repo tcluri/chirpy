@@ -63,5 +63,4 @@ The Chirpy webserver uses the following external dependencies:
 
 -   `github.com/go-chi/chi/v5`: Lightweight and expressive HTTP router for Go.
 -   `github.com/joho/godotenv`: Go library for loading environment variables from a `.env` file.
--   `github.com/tcluri/chirpy/internal/database`: Internal package for managing the database.
 
